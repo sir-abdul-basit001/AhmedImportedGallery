@@ -1,0 +1,15 @@
+{
+  "name": "ahmed-imported-gallery",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm run install:all && npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "create-admin": "npm --prefix backend run create-admin",
+    "seed": "npm --prefix backend run seed"
+  }
+}

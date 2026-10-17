@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Tailwind theme only: colours, font, animations. All styling lives in the JSX as Tailwind classes. */
+@theme {
+  --color-navy: #0b1f46;
+  --color-gold: #f4b400;
+  --font-sans: "Gulzar", serif;
+  --shadow-soft: 0 15px 35px rgba(0, 0, 0, 0.08);
+  --animate-fade-up: fade-up 0.9s ease;
+  --animate-float: float 5s ease-in-out infinite;
+  @keyframes fade-up { 0% { opacity: 0; transform: translateY(40px); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+}
+
+/* Light / dark colours, switched by the "dark" class on <html> */
+:root { --page: #f5f7fb; --card: #ffffff; --ink: #222222; --sub: #666666; --line: #e7e7e7; --head: #0b1f46; }
+.dark { --page: #0d1530; --card: #141f45; --ink: #e8ecf8; --sub: #b7c0dc; --line: #27345f; --head: #ffffff; }
+
+@theme inline {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-line: var(--line);
+  --color-head: var(--head);
+}
