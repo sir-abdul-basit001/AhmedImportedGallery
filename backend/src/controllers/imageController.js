@@ -1,23 +1,51 @@
-import Image from "../models/Image.js";
+import ImageKit from "imagekit"
 
-const sniff = (b) => {
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
-  if (b.subarray(0, 8).toString("hex") === "89504e470d0a1a0a") return "image/png";
-  if (b.subarray(0, 4).toString() === "RIFF" && b.subarray(8, 12).toString() === "WEBP") return "image/webp";
-  return null;
-};
+let imageKitInstance
 
-export const uploadImage = async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "No image uploaded" });
-  const type = sniff(req.file.buffer);
-  if (!type) return res.status(400).json({ message: "File is not a valid image" });
-  const img = await Image.create({ data: req.file.buffer, contentType: type });
-  res.status(201).json({ url: `/api/images/${img._id}` });
-};
+const getImageKit = () => {
+  if (imageKitInstance) {
+    return imageKitInstance
+  }
 
-export const getImage = async (req, res) => {
-  const img = await Image.findById(req.params.id);
-  if (!img) return res.status(404).end();
-  res.set({ "Content-Type": img.contentType, "Cache-Control": "public, max-age=31536000, immutable" });
-  res.send(img.data);
-};
+  const publicKey = process.env.IMAGEKIT_PUBLIC_KEY
+  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY
+  const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT
+
+  if (!publicKey || !privateKey || !urlEndpoint) {
+    throw new Error("ImageKit environment variables are missing.")
+  }
+
+  imageKitInstance = new ImageKit({
+    publicKey,
+    privateKey,
+    urlEndpoint,
+  })
+
+  return imageKitInstance
+}
+
+export const uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No image provided. Multer did not receive the file.",
+      })
+    }
+
+    const result = await getImageKit().upload({
+      file: req.file.buffer,
+      fileName: `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+      folder: "/uploads",
+      useUniqueFileName: true,
+    })
+
+    return res.status(201).json({
+      message: "Image uploaded successfully.",
+      url: result.url,
+      fileId: result.fileId,
+    })
+  } catch (error) {
+    console.error("IMAGEKIT UPLOAD ERROR:", error)
+    next(error)
+  }
+}

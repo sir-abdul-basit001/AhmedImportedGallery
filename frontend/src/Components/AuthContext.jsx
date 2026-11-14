@@ -1,20 +1,77 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { createContext, useContext, useEffect, useState } from "react"
+import axios from "axios"
 
-const Ctx = createContext(null);
-export const useAuth = () => useContext(Ctx);
+const Ctx = createContext(null)
+
+axios.defaults.withCredentials = true
+axios.defaults.headers.common["Content-Type"] = "application/json"
+
+export const useAuth = () => useContext(Ctx)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    axios.get("/api/auth/me").then((r) => setUser(r.data)).catch(() => setUser(null)).finally(() => setLoading(false));
-  }, []);
+    let mounted = true
 
-  const login = async (email, password) => { const r = await axios.post("/api/auth/login", { email, password }); setUser(r.data); return r.data; };
-  const register = async (name, email, password) => { const r = await axios.post("/api/auth/register", { name, email, password }); setUser(r.data); return r.data; };
-  const logout = async () => { await axios.post("/api/auth/logout").catch(() => {}); setUser(null); };
+    axios
+      .get("/api/auth/me")
+      .then((response) => {
+        if (mounted) setUser(response.data)
+      })
+      .catch(() => {
+        if (mounted) setUser(null)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
 
-  return <Ctx.Provider value={{ user, loading, login, register, logout }}>{children}</Ctx.Provider>;
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const login = async (email, password) => {
+    const response = await axios.post("/api/auth/login", {
+      email,
+      password,
+    })
+
+    setUser(response.data)
+    return response.data
+  }
+
+  const register = async (name, email, password) => {
+    const response = await axios.post("/api/auth/register", {
+      name,
+      email,
+      password,
+    })
+
+    setUser(response.data)
+    return response.data
+  }
+
+  const logout = async () => {
+    try {
+      await axios.post("/api/auth/logout")
+    } finally {
+      setUser(null)
+    }
+  }
+
+  return (
+    <Ctx.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  )
 }
