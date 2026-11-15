@@ -1,16 +1,17 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import axios from "axios";
-import "react-toastify/dist/ReactToastify.css";
-import App from "./App.jsx";
-import { AuthProvider } from "./Components/AuthContext.jsx";
-import { SiteProvider } from "./Components/SiteContext.jsx";
-import { CartProvider } from "./Components/CartContext.jsx";
-import "./index.css";
+import "@fortawesome/fontawesome-free/css/all.min.css"
+import React from "react"
+import ReactDOM from "react-dom/client"
+import { BrowserRouter } from "react-router-dom"
+import { ToastContainer } from "react-toastify"
+import axios from "axios"
+import "react-toastify/dist/ReactToastify.css"
+import App from "./App.jsx"
+import { AuthProvider } from "./Components/AuthContext.jsx"
+import { SiteProvider } from "./Components/SiteContext.jsx"
+import { CartProvider } from "./Components/CartContext.jsx"
+import "./index.css"
 
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -22,5 +23,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </CartProvider>
       </AuthProvider>
     </SiteProvider>
-  </BrowserRouter>
-);
+  </BrowserRouter>,
+)
