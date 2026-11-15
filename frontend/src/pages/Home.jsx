@@ -9,30 +9,73 @@ import { sec, btn, btnOutline } from "../ui.js"
 const catCard =
   "group block min-w-0 overflow-hidden rounded-3xl bg-card p-4 shadow-soft transition duration-300 hover:-translate-y-2 hover:shadow-xl sm:p-5"
 
+const asArray = (value, keys = []) => {
+  if (Array.isArray(value)) return value
+
+  if (!value || typeof value !== "object") return []
+
+  for (const key of keys) {
+    if (Array.isArray(value[key])) return value[key]
+  }
+
+  if (value.data && value.data !== value) {
+    return asArray(value.data, keys)
+  }
+
+  return []
+}
+
 export default function Home() {
-  const { settings: s } = useSite()
+  const { settings } = useSite()
+  const s = settings || {}
+
   const [cats, setCats] = useState([])
   const [products, setProducts] = useState([])
 
-  useEffect(() => {
-    axios
-      .get("/api/categories")
-      .then((r) => setCats(r.data.slice(0, 6)))
-      .catch(() => {})
+  const features = asArray(s.features)
+  const videos = asArray(s.videos)
+  const stats = asArray(s.stats)
+  const aboutPoints = asArray(s.aboutPoints)
 
-    axios
-      .get("/api/products", {
-        params: { featured: true, limit: 8 },
-      })
-      .then((r) => setProducts(r.data))
-      .catch(() => {})
+  useEffect(() => {
+    let active = true
+
+    const loadCategories = async () => {
+      try {
+        const response = await axios.get("/api/categories")
+        const data = asArray(response.data, ["categories", "items"])
+        if (active) setCats(data.slice(0, 6))
+      } catch (error) {
+        console.error("Could not load categories:", error)
+        if (active) setCats([])
+      }
+    }
+
+    const loadProducts = async () => {
+      try {
+        const response = await axios.get("/api/products", {
+          params: { featured: true, limit: 8 },
+        })
+
+        const data = asArray(response.data, ["products", "items"])
+        if (active) setProducts(data)
+      } catch (error) {
+        console.error("Could not load products:", error)
+        if (active) setProducts([])
+      }
+    }
+
+    loadCategories()
+    loadProducts()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   return (
     <main className="w-full min-w-0 overflow-x-clip">
-      {/* HERO SECTION */}
       <section className="grid min-w-0 grid-cols-1 overflow-hidden bg-page lg:min-h-[calc(100svh-72px)] lg:grid-cols-2">
-        {/* Image first on mobile */}
         <div className="relative order-1 h-[38vh] min-h-[250px] w-full sm:h-[48vh] lg:order-2 lg:h-auto lg:min-h-[600px]">
           <Img
             src={s.heroImage}
@@ -42,7 +85,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Text below image on mobile */}
         <div className="order-2 flex flex-col justify-center px-5 py-10 sm:px-10 sm:py-14 lg:order-1 lg:px-10 xl:px-16 xl:py-20">
           <span className="text-sm font-bold tracking-[2px] text-gold sm:text-base">
             {s.tagline}
@@ -72,19 +114,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES SECTION */}
       <section
         className={`${sec} grid grid-cols-1 gap-5 bg-card sm:grid-cols-2 sm:gap-6 xl:grid-cols-4 xl:gap-8`}
       >
-        {(s.features || []).map((f, i) => (
+        {features.map((f, i) => (
           <div
-            key={i}
+            key={f._id || i}
             className={`group relative flex min-w-0 flex-col items-center overflow-hidden rounded-3xl px-5 py-8 text-center shadow-soft transition duration-300 hover:-translate-y-2 hover:bg-navy hover:text-white sm:px-6 sm:py-10 ${
               i % 4 === 1 ? "bg-gold/10" : "bg-page"
             }`}
           >
             <i
-              className={`fa-solid ${f.icon} mb-5 text-5xl text-gold transition duration-300 group-hover:scale-110 group-hover:rotate-6 sm:text-6xl`}
+              className={`fa-solid ${f.icon || ""} mb-5 text-5xl text-gold transition duration-300 group-hover:scale-110 group-hover:rotate-6 sm:text-6xl`}
             />
 
             <h3 className="mb-3 text-lg font-bold text-head transition-colors group-hover:text-white sm:text-xl">
@@ -98,7 +139,6 @@ export default function Home() {
         ))}
       </section>
 
-      {/* POPULAR CATEGORIES */}
       <section className={`${sec} bg-page`}>
         <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
           <span className="text-xs font-bold tracking-[3px] text-gold sm:text-sm">
@@ -154,7 +194,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURED PRODUCTS */}
       <section className={`${sec} bg-card`}>
         <div className="mb-8 flex flex-col gap-4 sm:mb-11 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -189,14 +228,11 @@ export default function Home() {
         )}
       </section>
 
-      {/* STATISTICS */}
-      <Stats stats={s.stats} />
+      <Stats stats={stats} />
 
-      {/* ABOUT SECTION */}
       <AboutBlock s={s} text={s.aboutText} to="/about" cta="Read More" />
 
-      {/* VIDEOS */}
-      {s.videos?.length > 0 && (
+      {videos.length > 0 && (
         <section className={`${sec} bg-page`}>
           <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
             <span className="text-xs font-bold tracking-[3px] text-gold sm:text-sm">
@@ -213,9 +249,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-            {s.videos.map((v, i) => (
+            {videos.map((v, i) => (
               <div
-                key={i}
+                key={v._id || i}
                 className="relative min-w-0 overflow-hidden rounded-2xl border border-line bg-card shadow-soft"
               >
                 <video
@@ -247,13 +283,15 @@ export default function Home() {
 }
 
 export function Stats({ stats = [] }) {
+  const safeStats = asArray(stats)
+
   return (
     <section
       className={`${sec} grid grid-cols-1 gap-4 bg-linear-to-br from-navy to-[#173d7f] text-center text-white sm:grid-cols-2 sm:gap-6 xl:grid-cols-4 xl:gap-8`}
     >
-      {stats.map((st, i) => (
+      {safeStats.map((st, i) => (
         <div
-          key={i}
+          key={st._id || i}
           className="rounded-2xl border border-white/10 px-4 py-8 transition duration-300 hover:bg-white/5 sm:px-5 sm:py-10"
         >
           <h2 className="mb-3 break-words text-4xl font-extrabold text-gold sm:text-5xl lg:text-[52px]">
@@ -269,12 +307,13 @@ export function Stats({ stats = [] }) {
   )
 }
 
-export function AboutBlock({ s, text, to, cta }) {
+export function AboutBlock({ s = {}, text, to, cta }) {
+  const safePoints = asArray(s.aboutPoints)
+
   return (
     <section
       className={`${sec} grid grid-cols-1 items-center gap-8 bg-page sm:gap-10 lg:grid-cols-2 lg:gap-14 xl:gap-[70px]`}
     >
-      {/* Image first on mobile */}
       <div className="min-w-0 overflow-hidden rounded-3xl">
         <Img
           src={s.aboutImage}
@@ -297,13 +336,13 @@ export function AboutBlock({ s, text, to, cta }) {
         </p>
 
         <ul className="mb-8 space-y-4">
-          {(s.aboutPoints || []).map((p, i) => (
+          {safePoints.map((point, i) => (
             <li
               key={i}
               className="flex items-start gap-3 text-sm leading-6 font-medium text-ink sm:text-base"
             >
               <i className="fa-solid fa-check mt-1 shrink-0 text-gold" />
-              <span>{p}</span>
+              <span>{point}</span>
             </li>
           ))}
         </ul>
