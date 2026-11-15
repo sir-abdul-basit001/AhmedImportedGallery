@@ -17,22 +17,21 @@ const links = [
 ]
 
 const linkCls = ({ isActive }) =>
-  `block rounded-xl px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200
-   ${
-     isActive
-       ? "bg-navy text-gold"
-       : "text-ink hover:bg-navy/10 hover:text-gold"
-   }`
+  `block rounded-xl px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+    isActive ? "bg-navy text-gold" : "text-ink hover:bg-navy/10 hover:text-gold"
+  }`
 
 export default function Navbar() {
   const { settings } = useSite()
   const { user } = useAuth()
   const { count } = useCart()
+
   const nav = useNavigate()
 
   const [q, setQ] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem("theme") === "dark"
@@ -64,6 +63,7 @@ export default function Navbar() {
     if (!value) return
 
     nav(`/shop?q=${encodeURIComponent(value)}`)
+
     setQ("")
     setSearchOpen(false)
     setMenuOpen(false)
@@ -74,7 +74,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-card/90 text-head shadow-lg shadow-black/5 backdrop-blur-xl">
       <div className="mx-auto flex min-h-[72px] max-w-[1600px] items-center justify-between gap-4 px-5 py-3 sm:px-8 lg:px-10 xl:px-12">
-        {/* Logo */}
         <Link
           to="/"
           onClick={closeMenu}
@@ -85,11 +84,10 @@ export default function Navbar() {
           </span>
 
           <h2 className="max-w-[180px] text-base leading-tight font-extrabold sm:max-w-[220px] sm:text-lg lg:max-w-[250px] lg:text-xl">
-            {settings.shopName || "Ahmed Imported Gallery"}
+            {settings?.shopName || "Ahmed Imported Gallery"}
           </h2>
         </Link>
 
-        {/* Desktop navigation */}
         <nav
           aria-label="Main navigation"
           className="hidden items-center gap-1 xl:flex"
@@ -106,9 +104,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Action buttons */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          {/* Search */}
           <form
             onSubmit={search}
             className={`flex items-center overflow-hidden rounded-full border transition-all duration-300 ${
@@ -143,7 +139,7 @@ export default function Navbar() {
           <button
             type="button"
             className={iconBtn}
-            onClick={() => setSearchOpen((prev) => !prev)}
+            onClick={() => setSearchOpen((previous) => !previous)}
             aria-label={searchOpen ? "Close search" : "Open search"}
             aria-expanded={searchOpen}
           >
@@ -154,7 +150,6 @@ export default function Navbar() {
             />
           </button>
 
-          {/* Cart */}
           <Link
             to="/cart"
             aria-label={`Cart, ${count} items`}
@@ -167,7 +162,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Admin */}
           {user?.role === "admin" && (
             <Link
               to="/admin"
@@ -178,7 +172,6 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Account */}
           <Link
             to={user ? "/account" : "/login"}
             aria-label={user ? "Account" : "Log in"}
@@ -189,21 +182,19 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Theme */}
           <button
             type="button"
             className={iconBtn}
-            onClick={() => setDark((prev) => !prev)}
+            onClick={() => setDark((previous) => !previous)}
             aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
           >
             <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"}`} />
           </button>
 
-          {/* Mobile menu */}
           <button
             type="button"
             className={`${iconBtn} xl:hidden`}
-            onClick={() => setMenuOpen((prev) => !prev)}
+            onClick={() => setMenuOpen((previous) => !previous)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
@@ -213,7 +204,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile and tablet navigation */}
       <div
         id="mobile-navigation"
         className={`overflow-hidden border-t border-line bg-card transition-all duration-300 ease-in-out xl:hidden ${
