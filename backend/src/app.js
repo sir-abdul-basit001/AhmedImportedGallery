@@ -5,10 +5,12 @@ import express from "express"
 import helmet from "helmet"
 import cookieParser from "cookie-parser"
 import rateLimit from "express-rate-limit"
+
 import { env } from "./services/env.js"
 import sanitize from "./middleware/sanitize.js"
 import originCheck from "./middleware/originCheck.js"
 import { notFound, errorHandler } from "./middleware/errorHandler.js"
+
 import authRoutes from "./routes/authRoutes.js"
 import productRoutes from "./routes/productRoutes.js"
 import categoryRoutes from "./routes/categoryRoutes.js"
@@ -20,9 +22,70 @@ import orderRoutes from "./routes/orderRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
 
 const app = express()
+
 app.set("trust proxy", 1)
 app.disable("x-powered-by")
 
+// CORS configuration
+const allowedOrigins = [
+  env.clientUrl,
+  "http://localhost:5173",
+  "http://localhost:5174",
+]
+  .filter(Boolean)
+  .map((origin) => {
+    try {
+      return new URL(origin).origin
+    } catch {
+      return null
+    }
+  })
+  .filter(Boolean)
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+
+  if (!origin) {
+    return next()
+  }
+
+  let requestOrigin
+
+  try {
+    requestOrigin = new URL(origin).origin
+  } catch {
+    return res.status(403).json({
+      message: "Invalid origin",
+    })
+  }
+
+  if (!allowedOrigins.includes(requestOrigin)) {
+    return res.status(403).json({
+      message: "Origin not allowed",
+    })
+  }
+
+  res.setHeader("Access-Control-Allow-Origin", requestOrigin)
+  res.setHeader("Access-Control-Allow-Credentials", "true")
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
+  )
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-CSRF-Token, X-CSRF-TOKEN",
+  )
+  res.setHeader("Access-Control-Max-Age", "86400")
+  res.setHeader("Vary", "Origin")
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end()
+  }
+
+  next()
+})
+
+// Security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -51,16 +114,24 @@ app.use(
     },
   }),
 )
+
 app.use(express.json({ limit: "20kb" }))
 app.use(cookieParser())
 app.use(sanitize)
+
 app.use(
   "/api",
-  rateLimit({ windowMs: 15 * 60 * 1000, limit: 600 }),
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 600,
+  }),
   originCheck,
 )
 
-app.get("/api/health", (req, res) => res.json({ ok: true }))
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true })
+})
+
 app.use("/api/auth", authRoutes)
 app.use("/api/products", productRoutes)
 app.use("/api/categories", categoryRoutes)
@@ -70,17 +141,26 @@ app.use("/api/settings", settingsRoutes)
 app.use("/api/contact", contactRoutes)
 app.use("/api/orders", orderRoutes)
 app.use("/api/admin", adminRoutes)
+
 app.use("/api", notFound)
 
-// Production: serve the built React app from the same server (same origin = safest cookies)
+// Production: serve the built React app from the same server
 const dist = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../frontend/dist",
 )
+
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist, { index: false, maxAge: "1h" }))
+  app.use(
+    express.static(dist, {
+      index: false,
+      maxAge: "1h",
+    }),
+  )
+
   app.use((req, res, next) => {
     if (req.method !== "GET") return next()
+
     res.set("Cache-Control", "no-cache")
     res.sendFile(path.join(dist, "index.html"))
   })
@@ -88,4 +168,5 @@ if (fs.existsSync(dist)) {
 
 app.use(notFound)
 app.use(errorHandler)
+
 export default app
