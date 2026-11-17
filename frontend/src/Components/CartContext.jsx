@@ -78,10 +78,7 @@ export function CartProvider({ children }) {
 
   const clear = () => setItems([])
 
-  const count = items.reduce(
-    (total, item) => total + (Number(item.qty) || 0),
-    0,
-  )
+  const count = items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0)
 
   const total = items.reduce(
     (sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0),

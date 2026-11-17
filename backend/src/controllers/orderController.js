@@ -3,7 +3,7 @@ import Order from "../models/Order.js"
 
 export const createOrder = async (req, res) => {
   try {
-    const { items, phone, address, note } = req.body || {}
+    const { items, phone, address, note = "" } = req.body || {}
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -23,23 +23,21 @@ export const createOrder = async (req, res) => {
       })
     }
 
-    const productIds = items.map((item) => item.product)
+    const invalidItem = items.some(
+      (item) =>
+        !item.product ||
+        !Number.isInteger(Number(item.qty)) ||
+        Number(item.qty) < 1 ||
+        Number(item.qty) > 50,
+    )
 
-    if (
-      items.some(
-        (item) =>
-          !item.product ||
-          !Number.isInteger(Number(item.qty)) ||
-          Number(item.qty) < 1 ||
-          Number(item.qty) > 50,
-      )
-    ) {
+    if (invalidItem) {
       return res.status(400).json({
         message: "Invalid cart items or quantities",
       })
     }
 
-    const ids = [...new Set(productIds.map(String))]
+    const ids = [...new Set(items.map((item) => String(item.product)))]
 
     const products = await Product.find({
       _id: { $in: ids },
@@ -83,7 +81,7 @@ export const createOrder = async (req, res) => {
       total,
       phone: String(phone).trim(),
       address: String(address).trim(),
-      note: note ? String(note).trim() : "",
+      note: String(note).trim(),
     })
 
     return res.status(201).json(order)
