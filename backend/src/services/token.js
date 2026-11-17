@@ -29,12 +29,13 @@ export const setAuthCookie = (res, user) => {
 
 export const clearAuthCookie = (res) => {
   const { maxAge, ...options } = cookieOptions
+
   res.clearCookie("token", options)
 }
 
-export const publicUser = (u) => ({
-  id: u._id,
-  name: u.name,
-  email: u.email,
-  role: u.role,
+export const publicUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
 })
