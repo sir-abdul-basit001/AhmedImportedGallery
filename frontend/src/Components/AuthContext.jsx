@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react"
+
 import axios from "axios"
 
 const Ctx = createContext(null)
 
 axios.defaults.withCredentials = true
-axios.defaults.headers.common["Content-Type"] = "application/json"
 
 export const useAuth = () => useContext(Ctx)
 
@@ -15,17 +15,32 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true
 
-    axios
-      .get("/api/auth/me")
-      .then((response) => {
-        if (mounted) setUser(response.data)
-      })
-      .catch(() => {
-        if (mounted) setUser(null)
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
-      })
+    const checkAuth = async () => {
+      try {
+        const response = await axios.get("/api/auth/me")
+
+        if (mounted) {
+          setUser(response.data)
+        }
+      } catch (error) {
+        if (mounted) {
+          setUser(null)
+
+          if (error.response?.status !== 401) {
+            console.error(
+              "Authentication check failed:",
+              error.response?.data || error.message,
+            )
+          }
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    checkAuth()
 
     return () => {
       mounted = false
@@ -39,6 +54,7 @@ export function AuthProvider({ children }) {
     })
 
     setUser(response.data)
+
     return response.data
   }
 
@@ -50,6 +66,7 @@ export function AuthProvider({ children }) {
     })
 
     setUser(response.data)
+
     return response.data
   }
 

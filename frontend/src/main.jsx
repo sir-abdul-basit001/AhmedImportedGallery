@@ -1,4 +1,6 @@
 import "@fortawesome/fontawesome-free/css/all.min.css"
+import "react-toastify/dist/ReactToastify.css"
+import "./index.css"
 
 import React from "react"
 import ReactDOM from "react-dom/client"
@@ -6,16 +8,11 @@ import { BrowserRouter } from "react-router-dom"
 import { ToastContainer } from "react-toastify"
 import axios from "axios"
 
-import "react-toastify/dist/ReactToastify.css"
-
 import App from "./App.jsx"
 import { AuthProvider } from "./Components/AuthContext.jsx"
 import { SiteProvider } from "./Components/SiteContext.jsx"
 import { CartProvider } from "./Components/CartContext.jsx"
 
-import "./index.css"
-
-// Configure Axios to use the deployed backend
 axios.defaults.baseURL = (import.meta.env.VITE_API_URL || "").replace(
   /\/api\/?$/,
   "",
